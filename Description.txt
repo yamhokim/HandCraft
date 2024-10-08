@@ -1,0 +1,103 @@
+Movie/Video Editor App
+    - Want everything to be done using hand motions/gestures
+    - Features/Hand gestures
+        - use left pointer as virtual mouse
+        - can use peace sign to trim Video
+        - can use stop hand sign to pause Video
+        - can use stop hand sign while video is paused to resume video
+        - Have some sort of hand gesture to fast forward through a video   
+            - something like a swiping hand motion
+        - Use a pinching motion to zoom in and out
+        - thumbs up motion to save a video
+        - Gun gesture to add effects
+            - Gun1 is 1 finger gun 
+        - C hand gesture to add a filter
+        - OK hand symbol to select an option that the left pointer is hovering over
+        - back hand symbol to cancel a choice/back out
+        - wave to exit the app
+            - should ask user if they want to save work before exiting, to which the user can either use their pointer finger and ok sign, or use the back symbol to cancel exit
+    - Maybe we can include SAM somehow to add object tracking for the videos
+
+1. Frontend
+Gesture Recognition Module
+    Libraries/Tools: Still using tools like Google MediaPipe or OpenCV for hand gesture tracking.
+    Camera Input: Captures live video from the webcam for gesture-based interactions.
+    Gesture Classification: Detects gestures and maps them to video editing commands (e.g., "cut", "trim", "play").
+
+UI Components
+    React (or Angular): For building the frontend, with the timeline, media player, and notification system.
+    WebSockets: Optionally for real-time updates, especially useful if gesture commands are processed asynchronously.
+
+2. Backend (Python & Django)
+Django will be the backbone of the application’s backend, handling API requests, media management, user authentication, and video processing. Here’s the breakdown:
+
+Django Rest Framework (DRF)
+    API Layer: Using Django Rest Framework to create a set of APIs that the frontend will interact with for video manipulation, project saving, user management, etc.
+    Endpoints: For actions like uploading videos, fetching project data, applying edits, and exporting rendered video.
+
+Video Processing Engine (FFmpeg Integration)
+    FFmpeg Python Wrappers: Use ffmpeg-python, moviepy, or other Python libraries that wrap around FFmpeg to handle video editing tasks like cutting, trimming, and merging videos.
+    Task Queue (Celery + Redis): Django integrates with Celery for task scheduling to handle heavy video processing jobs in the background (e.g., rendering, applying effects). Redis can be used as a message broker for Celery.
+
+Gesture Command Processor
+    Gesture Mapping Service: Receives gesture input from the frontend, translates it into video editing commands (e.g., cut, trim) and forwards them to the video processing engine.
+    This service can be a dedicated Django view or a Python service that runs alongside Django.
+
+WebSockets (Django Channels)
+    Real-time Communication: Use Django Channels to provide real-time updates between the frontend and backend. For example, when a gesture is made, the backend can send immediate feedback or preview changes to the frontend.
+
+3. Database (Django ORM)
+Django’s ORM will handle interactions with the database, managing user data, project metadata, and media files.
+
+User Profiles: Store user account details, preferences, and settings.
+Project Metadata: Store information about video projects (clip locations, edits made, timeline structure).
+Media Storage: Use the database to track uploaded files and their corresponding edits, such as video clips, audio, and final renderings.
+PostgreSQL / MySQL: Use either of these relational databases, both well-supported by Django.
+
+4. Middleware / Gesture Control Logic
+This layer processes gesture inputs and sends commands to the video processing engine in Django.
+
+Gesture Mapping Logic: Similar to before, but this logic can be hosted within Django views or as a dedicated service. It receives gesture data from the frontend, maps it to an appropriate video editing command, and forwards the command to Django’s video processing API.
+
+5. Machine Learning Model / AI Engine (Optional)
+If you need more advanced gesture detection, you could deploy a machine learning model.
+    TensorFlow or PyTorch Models: Host any advanced gesture recognition models using Django’s machine learning libraries (TensorFlow, Keras, or PyTorch). Use the model to interpret the gestures captured by the frontend.
+    API Endpoint: The model can be accessed via an API that receives gesture data (images or skeletal points) and returns the recognized gesture.
+
+6. File Storage
+Handling media files (videos, clips, and final output) is key for a movie editor application.
+
+Django Storage Backends
+    Local Storage: For development, media files can be stored on the local filesystem using Django’s default file storage system.
+    Cloud Storage (AWS S3, Google Cloud): Use Django’s built-in support for cloud storage via libraries like django-storages to store large media files.
+    CDN Integration: Optionally integrate a CDN for faster video file serving.
+
+7. Rendering Pipeline
+Django and Celery can manage the rendering process of edited videos.
+    Django + Celery: Offload heavy rendering tasks, such as combining clips or applying effects, to background tasks managed by Celery. This ensures the app remains responsive while the backend handles time-intensive tasks.
+    FFmpeg-based Rendering: Python libraries like moviepy or ffmpeg-python will work with Celery to process the video rendering commands.
+    Task Queue (Redis or RabbitMQ): Use a task queue like Redis or RabbitMQ to manage multiple video rendering tasks simultaneously.
+
+8. User Authentication & Authorization
+Django provides built-in authentication that can be enhanced with OAuth2/JWT for modern token-based auth.
+    Django Authentication System: Use Django’s built-in user authentication to manage user sessions and logins.
+    OAuth2 / JWT: If the app requires API-level authentication (e.g., mobile access or third-party integrations), Django can be integrated with django-oauth-toolkit or django-rest-framework-simplejwt for token-based auth.
+
+9. Real-time Collaboration (Optional)
+Enable multiple users to edit videos collaboratively.
+    Django Channels: Using Django Channels, you can enable WebSocket-based communication for live collaboration features, similar to how Google Docs allows simultaneous edits.
+    WebRTC (Optional): You could also integrate WebRTC for real-time video sharing and collaboration between users.
+
+10. Deployment & Scaling
+Given the nature of video processing, you'll need a scalable deployment setup.
+    Docker for Containerization: Containerize the Django backend along with FFmpeg and Celery worker processes using Docker.
+    Kubernetes for Orchestration: Use Kubernetes to scale the application, especially for background video processing tasks.
+    CI/CD Pipeline: Set up a continuous integration/continuous delivery (CI/CD) pipeline for rapid deployment and updates using tools like GitHub Actions, CircleCI, or Jenkins.
+    Serverless Functions (Optional): If you want to offload some video processing tasks, serverless functions (like AWS Lambda) can handle smaller, lightweight operations like trimming clips or detecting gestures.
+
+Updated Flow:
+    User Interface: The user performs a hand gesture, which is captured via the frontend.
+    Gesture Recognition: The frontend (using MediaPipe or similar) detects the gesture and sends it to the Django backend via WebSocket or API call.
+    Gesture Mapping: The backend processes the gesture, mapping it to a video editing command (e.g., trim, cut).
+    Video Processing: Django's video processing engine (using FFmpeg or moviepy) applies the edit, and Celery handles long-running tasks asynchronously.
+    Response: The backend sends the updated video or a notification of success to the frontend, and the user sees the changes.
